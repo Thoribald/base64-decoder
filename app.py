@@ -3,20 +3,31 @@ Flask-Version des Base64 Decoders für Render.com
 Alle Features aus der Anvil-Version
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import base64
 import re
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
+from translations import get_translation
 
 app = Flask(__name__)
+app.secret_key = 'base64-decoder-secret-key-change-in-production'
 
 # --- Routen ---
 
 @app.route('/')
 def index():
     """Hauptseite"""
-    return render_template('index.html')
+    lang = session.get('lang', 'de')
+    return render_template('index.html', lang=lang)
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    """Sprache ändern"""
+    if lang in ['de', 'en']:
+        session['lang'] = lang
+        return jsonify({'success': True, 'lang': lang})
+    return jsonify({'success': False, 'error': 'Invalid language'}), 400
 
 @app.route('/decode_direct', methods=['POST'])
 def decode_direct():
