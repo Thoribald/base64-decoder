@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Decoder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section, .output-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #input_area {
+            min-height: 150px;
+        }
+
+        #output_area {
+            min-height: 200px;
+            background-color: #f5f5f5;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .btn-clear {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            display: block;
+        }
+
+        .file-upload {
+            margin-bottom: 20px;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload label {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .file-upload label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .loader {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔓 Base64 Decoder</h1>
+            <p>Bereit. Laden Sie eine Datei hoch oder fügen Sie Base64 oder einen Text ein.</p>
+        </div>
+
+        <div class="content">
+            <!-- File Upload -->
+            <div class="file-upload">
+                <label for="file_input">📁 XML-Datei hochladen</label>
+                <input type="file" id="file_input" accept=".xml,.txt,text/*">
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-section">
+                <label for="input_area">Eingabe:</label>
+                <textarea id="input_area" placeholder="XML oder Base64-Text hier eingeben..."></textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-grid">
+                <button class="btn-primary" onclick="parseXML()">XML parsen und Base64 decodieren</button>
+                <button class="btn-secondary" onclick="decodeDirect()">Nur Base64 decodieren</button>
+                <button class="btn-info" onclick="extractPatterns()">Base64-Muster finden</button>
+                <button class="btn-success" onclick="encodeText()">Text zu Base64 kodieren</button>
+                <button class="btn-clear" onclick="clearAll()">Alles löschen</button>
+            </div>
+
+            <!-- Loader -->
+            <div class="loader" id="loader"></div>
+
+            <!-- Status -->
+            <div class="status" id="status"></div>
+
+            <!-- Output Area -->
+            <div class="output-section">
+                <label for="output_area">Ausgabe:</label>
+                <textarea id="output_area" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File Upload Handler
+        document.getElementById('file_input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('input_area').value = event.target.result;
+                    showStatus('success', `Geladen: ${file.name}`);
+                };
+                reader.onerror = function() {
+                    showStatus('error', 'Fehler beim Lesen der Datei');
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function showLoader(show) {
+            document.getElementById('loader').style.display = show ? 'block' : 'none';
+        }
+
+        async function parseXML() {
+            const inputText = document.getElementById('input_area').value;
+            if (!inputText.trim()) {
+                showStatus('error', 'Bitte geben Sie XML-Inhalt ein!');
+                return;
+            }
+
+            showLoader(true);
+            try {
+                const response = await fetch('/parse_xml', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `input_text=${encodeURIComponent(inputText)}`
+                });
+
+                const data = await response.json();
+                showLoader(false);
+
+                if (data.success) {
+                    document.getElementById('output_area').value = data.results.join('\n');
+                    showStatus('success', `Fertig. ${data.count} Base64-Inhalte gefunden.`);
+                } else {
+                    showStatus('error', data.error || 'Fehler aufgetreten');
+                }
+            } catch (error) {
+                showLoader(false);
+                showStatus('error', `Fehler: ${error.message}`);
+            }
+        }
+
+        async function decodeDirect() {
+            const inputText = document.getElementById('input_area').value;
+            if (!inputText.trim()) {
+                showStatus('error', 'Bitte geben Sie einen Base64-String ein!');
+                return;
+            }
+
+            showLoader(true);
+            try {
+                const response = await fetch('/decode_direct', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `input_text=${encodeURIComponent(inputText)}`
+                });
+
+                const data = await response.json();
+                showLoader(false);
+
+                if (data.success) {
+                    document.getElementById('output_area').value = data.result;
+                    showStatus('success', `Erfolgreich decodiert (${data.type})`);
+                } else {
+                    showStatus('error', data.error || 'Fehler beim Decodieren');
+                }
+            } catch (error) {
+                showLoader(false);
+                showStatus('error', `Fehler: ${error.message}`);
+            }
+        }
+
+        async function extractPatterns() {
+            const inputText = document.getElementById('input_area').value;
+            if (!inputText.trim()) {
+                showStatus('error', 'Bitte geben Sie Text ein!');
+                return;
+            }
+
+            showLoader(true);
+            try {
+                const response = await fetch('/extract_patterns', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `input_text=${encodeURIComponent(inputText)}`
+                });
+
+                const data = await response.json();
+                showLoader(false);
+
+                if (data.success) {
+                    if (data.results.length === 0) {
+                        document.getElementById('output_area').value =
+                            "═══════════════════════════════════════════════\n" +
+                            "Keine Base64-Strings gefunden.\n\n" +
+                            "Hinweis:\n" +
+                            "• Mindestlänge: 8 Zeichen\n" +
+                            "• Nur echte Base64-Strings werden erkannt\n" +
+                            "• Deutsche Wörter werden herausgefiltert\n" +
+                            "• Verschärfte Validierung aktiv";
+                        showStatus('info', data.message);
+                    } else {
+                        let output = '';
+                        data.results.forEach(result => {
+                            output += "═══════════════════════════════════════════════\n";
+                            output += `Position: ${result.position}\n`;
+                            output += `Kontext: ${result.context}\n\n`;
+                            output += `Base64: ${result.base64}\n\n`;
+                            output += `Klartext (${result.type}):\n${result.decoded}\n\n`;
+                        });
+                        document.getElementById('output_area').value = output;
+                        showStatus('success', `Fertig. ${data.count} echte Base64-Strings gefunden und dekodiert.`);
+                    }
+                } else {
+                    showStatus('error', data.error || 'Fehler bei der Mustersuche');
+                }
+            } catch (error) {
+                showLoader(false);
+                showStatus('error', `Fehler: ${error.message}`);
+            }
+        }
+
+        async function encodeText() {
+            const inputText = document.getElementById('input_area').value;
+            if (!inputText.trim()) {
+                showStatus('error', 'Bitte geben Sie Text zum Kodieren ein!');
+                return;
+            }
+
+            showLoader(true);
+            try {
+                const response = await fetch('/encode', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `input_text=${encodeURIComponent(inputText)}`
+                });
+
+                const data = await response.json();
+                showLoader(false);
+
+                if (data.success) {
+                    const output =
+                        `Klartext (${data.plaintext_length} Zeichen):\n` +
+                        `${data.plaintext}\n\n` +
+                        `Base64-kodiert (${data.encoded_length} Zeichen):\n` +
+                        `${data.encoded}`;
+                    document.getElementById('output_area').value = output;
+                    showStatus('success', `Text erfolgreich zu Base64 kodiert (${data.encoded_length} Zeichen)`);
+                } else {
+                    showStatus('error', data.error || 'Fehler beim Kodieren');
+                }
+            } catch (error) {
+                showLoader(false);
+                showStatus('error', `Fehler: ${error.message}`);
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('input_area').value = '';
+            document.getElementById('output_area').value = '';
+            document.getElementById('file_input').value = '';
+            showStatus('info', 'Bereit');
+        }
+    </script>
+</body>
+</html>
