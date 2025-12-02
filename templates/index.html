@@ -32,6 +32,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -42,6 +43,37 @@
         .header p {
             opacity: 0.9;
             font-size: 1.1em;
+        }
+
+        .lang-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
         }
 
         .content {
@@ -225,30 +257,34 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔓 Base64 Decoder</h1>
-            <p>Bereit. Laden Sie eine Datei hoch oder fügen Sie Base64 oder einen Text ein.</p>
+            <div class="lang-switcher">
+                <button class="lang-btn" onclick="switchLanguage('de')" id="lang-de">DE</button>
+                <button class="lang-btn" onclick="switchLanguage('en')" id="lang-en">EN</button>
+            </div>
+            <h1 id="app-title">🔓 Base64 Decoder</h1>
+            <p id="app-subtitle">Bereit. Laden Sie eine Datei hoch oder fügen Sie Base64 oder einen Text ein.</p>
         </div>
 
         <div class="content">
             <!-- File Upload -->
             <div class="file-upload">
-                <label for="file_input">📁 XML-Datei hochladen</label>
+                <label for="file_input" id="btn-upload">📁 XML-Datei hochladen</label>
                 <input type="file" id="file_input" accept=".xml,.txt,text/*">
             </div>
 
             <!-- Input Area -->
             <div class="input-section">
-                <label for="input_area">Eingabe:</label>
+                <label for="input_area" id="label-input">Eingabe:</label>
                 <textarea id="input_area" placeholder="XML oder Base64-Text hier eingeben..."></textarea>
             </div>
 
             <!-- Buttons -->
             <div class="button-grid">
-                <button class="btn-primary" onclick="parseXML()">XML parsen und Base64 decodieren</button>
-                <button class="btn-secondary" onclick="decodeDirect()">Nur Base64 decodieren</button>
-                <button class="btn-info" onclick="extractPatterns()">Base64-Muster finden</button>
-                <button class="btn-success" onclick="encodeText()">Text zu Base64 kodieren</button>
-                <button class="btn-clear" onclick="clearAll()">Alles löschen</button>
+                <button class="btn-primary" onclick="parseXML()" id="btn-parse-xml">XML parsen und Base64 decodieren</button>
+                <button class="btn-secondary" onclick="decodeDirect()" id="btn-decode">Nur Base64 decodieren</button>
+                <button class="btn-info" onclick="extractPatterns()" id="btn-extract">Base64-Muster finden</button>
+                <button class="btn-success" onclick="encodeText()" id="btn-encode">Text zu Base64 kodieren</button>
+                <button class="btn-clear" onclick="clearAll()" id="btn-clear">Alles löschen</button>
             </div>
 
             <!-- Loader -->
@@ -259,13 +295,132 @@
 
             <!-- Output Area -->
             <div class="output-section">
-                <label for="output_area">Ausgabe:</label>
+                <label for="output_area" id="label-output">Ausgabe:</label>
                 <textarea id="output_area" readonly></textarea>
             </div>
         </div>
     </div>
 
     <script>
+        // Translations
+        const translations = {
+            'de': {
+                'title': 'Base64 Decoder',
+                'subtitle': 'Bereit. Laden Sie eine Datei hoch oder fügen Sie Base64 oder einen Text ein.',
+                'upload_file': '📁 XML-Datei hochladen',
+                'parse_xml': 'XML parsen und Base64 decodieren',
+                'decode_direct': 'Nur Base64 decodieren',
+                'extract_patterns': 'Base64-Muster finden',
+                'encode_text': 'Text zu Base64 kodieren',
+                'clear_all': 'Alles löschen',
+                'input_label': 'Eingabe:',
+                'output_label': 'Ausgabe:',
+                'input_placeholder': 'XML oder Base64-Text hier eingeben...',
+                'loaded': 'Geladen',
+                'error_no_input': 'Bitte geben Sie XML-Inhalt ein!',
+                'error_no_base64': 'Bitte geben Sie einen Base64-String ein!',
+                'error_no_text': 'Bitte geben Sie Text ein!',
+                'error_no_encode_text': 'Bitte geben Sie Text zum Kodieren ein!',
+                'ready': 'Bereit',
+                'finished': 'Fertig',
+                'decoded_success': 'Erfolgreich decodiert',
+                'no_base64_found': 'Keine Base64-Strings gefunden.',
+                'hint_title': 'Hinweis:',
+                'hint_min_length': '• Mindestlänge: 8 Zeichen',
+                'hint_real_base64': '• Nur echte Base64-Strings werden erkannt',
+                'hint_filter_words': '• Deutsche Wörter werden herausgefiltert',
+                'hint_strict': '• Verschärfte Validierung aktiv',
+                'position': 'Position',
+                'context': 'Kontext',
+                'type': 'Typ',
+                'plaintext': 'Klartext',
+                'encoded_label': 'Base64-kodiert',
+                'characters': 'Zeichen',
+                'found_strings': 'echte Base64-Strings gefunden und dekodiert',
+                'text_encoded': 'Text erfolgreich zu Base64 kodiert'
+            },
+            'en': {
+                'title': 'Base64 Decoder',
+                'subtitle': 'Ready. Upload a file or paste Base64 or text.',
+                'upload_file': '📁 Upload XML File',
+                'parse_xml': 'Parse XML and decode Base64',
+                'decode_direct': 'Decode Base64 only',
+                'extract_patterns': 'Find Base64 patterns',
+                'encode_text': 'Encode text to Base64',
+                'clear_all': 'Clear all',
+                'input_label': 'Input:',
+                'output_label': 'Output:',
+                'input_placeholder': 'Enter XML or Base64 text here...',
+                'loaded': 'Loaded',
+                'error_no_input': 'Please enter XML content!',
+                'error_no_base64': 'Please enter a Base64 string!',
+                'error_no_text': 'Please enter text!',
+                'error_no_encode_text': 'Please enter text to encode!',
+                'ready': 'Ready',
+                'finished': 'Done',
+                'decoded_success': 'Successfully decoded',
+                'no_base64_found': 'No Base64 strings found.',
+                'hint_title': 'Note:',
+                'hint_min_length': '• Minimum length: 8 characters',
+                'hint_real_base64': '• Only real Base64 strings are detected',
+                'hint_filter_words': '• Common words are filtered out',
+                'hint_strict': '• Strict validation active',
+                'position': 'Position',
+                'context': 'Context',
+                'type': 'Type',
+                'plaintext': 'Plaintext',
+                'encoded_label': 'Base64-encoded',
+                'characters': 'characters',
+                'found_strings': 'real Base64 strings found and decoded',
+                'text_encoded': 'Text successfully encoded to Base64'
+            }
+        };
+
+        // Current language
+        let currentLang = '{{ lang }}' || 'de';
+
+        // Switch language function
+        async function switchLanguage(lang) {
+            currentLang = lang;
+
+            // Save to server session
+            try {
+                await fetch(`/set_language/${lang}`);
+            } catch (error) {
+                console.error('Error saving language:', error);
+            }
+
+            // Update UI
+            updateUILanguage();
+
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lang-${lang}`).classList.add('active');
+        }
+
+        // Update all UI text
+        function updateUILanguage() {
+            const t = translations[currentLang];
+
+            document.getElementById('app-title').textContent = '🔓 ' + t.title;
+            document.getElementById('app-subtitle').textContent = t.subtitle;
+            document.getElementById('btn-upload').textContent = t.upload_file;
+            document.getElementById('label-input').textContent = t.input_label;
+            document.getElementById('input_area').placeholder = t.input_placeholder;
+            document.getElementById('btn-parse-xml').textContent = t.parse_xml;
+            document.getElementById('btn-decode').textContent = t.decode_direct;
+            document.getElementById('btn-extract').textContent = t.extract_patterns;
+            document.getElementById('btn-encode').textContent = t.encode_text;
+            document.getElementById('btn-clear').textContent = t.clear_all;
+            document.getElementById('label-output').textContent = t.output_label;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUILanguage();
+            document.getElementById(`lang-${currentLang}`).classList.add('active');
+        });
+
         // File Upload Handler
         document.getElementById('file_input').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -273,7 +428,7 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     document.getElementById('input_area').value = event.target.result;
-                    showStatus('success', `Geladen: ${file.name}`);
+                    showStatus('success', `${translations[currentLang].loaded}: ${file.name}`);
                 };
                 reader.onerror = function() {
                     showStatus('error', 'Fehler beim Lesen der Datei');
@@ -295,7 +450,7 @@
         async function parseXML() {
             const inputText = document.getElementById('input_area').value;
             if (!inputText.trim()) {
-                showStatus('error', 'Bitte geben Sie XML-Inhalt ein!');
+                showStatus('error', translations[currentLang].error_no_input);
                 return;
             }
 
@@ -312,7 +467,7 @@
 
                 if (data.success) {
                     document.getElementById('output_area').value = data.results.join('\n');
-                    showStatus('success', `Fertig. ${data.count} Base64-Inhalte gefunden.`);
+                    showStatus('success', `${translations[currentLang].finished}. ${data.count} Base64-Inhalte gefunden.`);
                 } else {
                     showStatus('error', data.error || 'Fehler aufgetreten');
                 }
@@ -325,7 +480,7 @@
         async function decodeDirect() {
             const inputText = document.getElementById('input_area').value;
             if (!inputText.trim()) {
-                showStatus('error', 'Bitte geben Sie einen Base64-String ein!');
+                showStatus('error', translations[currentLang].error_no_base64);
                 return;
             }
 
@@ -342,7 +497,7 @@
 
                 if (data.success) {
                     document.getElementById('output_area').value = data.result;
-                    showStatus('success', `Erfolgreich decodiert (${data.type})`);
+                    showStatus('success', `${translations[currentLang].decoded_success} (${data.type})`);
                 } else {
                     showStatus('error', data.error || 'Fehler beim Decodieren');
                 }
@@ -355,7 +510,7 @@
         async function extractPatterns() {
             const inputText = document.getElementById('input_area').value;
             if (!inputText.trim()) {
-                showStatus('error', 'Bitte geben Sie Text ein!');
+                showStatus('error', translations[currentLang].error_no_text);
                 return;
             }
 
@@ -372,26 +527,28 @@
 
                 if (data.success) {
                     if (data.results.length === 0) {
+                        const t = translations[currentLang];
                         document.getElementById('output_area').value =
                             "═══════════════════════════════════════════════\n" +
-                            "Keine Base64-Strings gefunden.\n\n" +
-                            "Hinweis:\n" +
-                            "• Mindestlänge: 8 Zeichen\n" +
-                            "• Nur echte Base64-Strings werden erkannt\n" +
-                            "• Deutsche Wörter werden herausgefiltert\n" +
-                            "• Verschärfte Validierung aktiv";
+                            t.no_base64_found + "\n\n" +
+                            t.hint_title + "\n" +
+                            t.hint_min_length + "\n" +
+                            t.hint_real_base64 + "\n" +
+                            t.hint_filter_words + "\n" +
+                            t.hint_strict;
                         showStatus('info', data.message);
                     } else {
+                        const t = translations[currentLang];
                         let output = '';
                         data.results.forEach(result => {
                             output += "═══════════════════════════════════════════════\n";
-                            output += `Position: ${result.position}\n`;
-                            output += `Kontext: ${result.context}\n\n`;
+                            output += `${t.position}: ${result.position}\n`;
+                            output += `${t.context}: ${result.context}\n\n`;
                             output += `Base64: ${result.base64}\n\n`;
-                            output += `Klartext (${result.type}):\n${result.decoded}\n\n`;
+                            output += `${t.plaintext} (${result.type}):\n${result.decoded}\n\n`;
                         });
                         document.getElementById('output_area').value = output;
-                        showStatus('success', `Fertig. ${data.count} echte Base64-Strings gefunden und dekodiert.`);
+                        showStatus('success', `${t.finished}. ${data.count} ${t.found_strings}.`);
                     }
                 } else {
                     showStatus('error', data.error || 'Fehler bei der Mustersuche');
@@ -405,7 +562,7 @@
         async function encodeText() {
             const inputText = document.getElementById('input_area').value;
             if (!inputText.trim()) {
-                showStatus('error', 'Bitte geben Sie Text zum Kodieren ein!');
+                showStatus('error', translations[currentLang].error_no_encode_text);
                 return;
             }
 
@@ -421,13 +578,14 @@
                 showLoader(false);
 
                 if (data.success) {
+                    const t = translations[currentLang];
                     const output =
-                        `Klartext (${data.plaintext_length} Zeichen):\n` +
+                        `${t.plaintext} (${data.plaintext_length} ${t.characters}):\n` +
                         `${data.plaintext}\n\n` +
-                        `Base64-kodiert (${data.encoded_length} Zeichen):\n` +
+                        `${t.encoded_label} (${data.encoded_length} ${t.characters}):\n` +
                         `${data.encoded}`;
                     document.getElementById('output_area').value = output;
-                    showStatus('success', `Text erfolgreich zu Base64 kodiert (${data.encoded_length} Zeichen)`);
+                    showStatus('success', `${t.text_encoded} (${data.encoded_length} ${t.characters})`);
                 } else {
                     showStatus('error', data.error || 'Fehler beim Kodieren');
                 }
@@ -441,7 +599,7 @@
             document.getElementById('input_area').value = '';
             document.getElementById('output_area').value = '';
             document.getElementById('file_input').value = '';
-            showStatus('info', 'Bereit');
+            showStatus('info', translations[currentLang].ready);
         }
     </script>
 </body>
